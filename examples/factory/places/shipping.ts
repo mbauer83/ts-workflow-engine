@@ -1,15 +1,11 @@
-import type { WorkflowPlace } from "../../../src/domain/place.js"
+import { definePlace } from "../../../src/domain/place.js"
 import type { FactoryRegistry } from "../workflow_registry.js"
 
 export const SHIPPING = Symbol('Shipping')
 
-export type ShippingState = { isActive: boolean }
+export type ShippingState = {}
 
-export const shippingActions = {}
-
-export const shippingPlace: WorkflowPlace<FactoryRegistry, typeof SHIPPING> = {
-  name: SHIPPING,
+export const shippingPlace = definePlace<FactoryRegistry>()(SHIPPING, {
   state: { isActive: false },
-  actions: shippingActions,
-  preconditions: {} as any
-}
+  transitionGuards: {}
+})

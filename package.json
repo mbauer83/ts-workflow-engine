@@ -5,7 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "pnpm run test:types",
+    "test:types": "tsd --typings src/application/engine.ts --files test-d/**/*.test-d.ts",
     "start": "tsx examples/factory/main.ts"  
   },
   "keywords": [],
@@ -14,6 +15,7 @@
   "packageManager": "pnpm@10.32.1",
   "devDependencies": {
     "@types/node": "^25.5.0",
+    "tsd": "^0.31.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
