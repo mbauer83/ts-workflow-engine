@@ -4,6 +4,9 @@ import { isPlainObject } from "./isPlainObject.js"
 const ownKeys = <T extends object>(value: T): Array<keyof T> =>
   Reflect.ownKeys(value) as Array<keyof T>
 
+const isTypedRecord = (value: Record<PropertyKey, unknown>): boolean =>
+  typeof value.type === "string"
+
 export function deepMergeUnknown(
   base: Record<PropertyKey, unknown>,
   patch: Record<PropertyKey, unknown>
@@ -15,6 +18,11 @@ export function deepMergeUnknown(
     const baseValue = merged[key]
 
     if (isPlainObject(baseValue) && isPlainObject(patchValue)) {
+      if (isTypedRecord(baseValue) && isTypedRecord(patchValue)) {
+        merged[key] = patchValue
+        continue
+      }
+
       merged[key] = deepMergeUnknown(baseValue, patchValue)
       continue
     }

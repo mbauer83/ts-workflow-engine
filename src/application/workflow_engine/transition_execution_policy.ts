@@ -4,9 +4,35 @@ import type { StateOf } from "../../domain/workflow_registry.js"
 import type { PlaceMap, TransitionCandidate, TransitionMap } from "./model.js"
 import { buildEvaluationContext, collectTransitionInputStates } from "./evaluation_context.js"
 import { applyStateUpdate } from "./state_updates.js"
+import { Chalk } from "chalk"
+
+const chalk = new Chalk({ level: 3 })
 
 const ownKeys = <T extends object>(value: T): Array<keyof T> =>
   Reflect.ownKeys(value) as Array<keyof T>
+
+const humanizeIdentifier = (value: string): string =>
+  value
+    .replaceAll(/[_-]+/g, " ")
+    .replaceAll(/([a-z\d])([A-Z])/g, "$1 $2")
+    .replaceAll(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .trim()
+    .toLowerCase()
+
+const describeLabel = (label: PropertyKey): string => {
+  if (typeof label === "symbol") {
+    const description = label.description
+    if (description && description.length > 0) {
+      return humanizeIdentifier(description)
+    }
+
+    const fallback = String(label)
+    const fromSymbolText = /^Symbol\((.*)\)$/.exec(fallback)?.[1]
+    return humanizeIdentifier(fromSymbolText ?? fallback)
+  }
+
+  return humanizeIdentifier(String(label))
+}
 
 export function evaluateEnabledTransitions<
   Places extends object,
@@ -70,9 +96,9 @@ export function fireTransitionAtomically<
   const transition = transitionMap[transitionName]
   if (!transition) return
 
-  const sourcePlaces = transition.inputPlaces.map(String).join(", ")
-  const targetPlaces = transition.outputPlaces.map(String).join(", ")
-  console.log(`[TRANSITION] ⚙️  ${String(transitionName)} :: [${sourcePlaces}] ➔ [${targetPlaces}]`)
+  const sourcePlaces = transition.inputPlaces.map(describeLabel).join(", ")
+  const targetPlaces = transition.outputPlaces.map(describeLabel).join(", ")
+  console.log(chalk.dim.gray(`· transition ${describeLabel(transitionName)} :: [${sourcePlaces}] ➔ [${targetPlaces}]`))
 
   const evaluationContext = buildEvaluationContext(placeMap)
   const inputStates = collectTransitionInputStates(placeMap, transition.inputPlaces)

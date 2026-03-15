@@ -37,6 +37,31 @@ Workflow-net semantics demonstrated in a compact flow:
 3. **AND-join/synchronization**: final assembly transition requires both lanes to be complete for the same work order id
 4. **Token/data propagation**: assembled and dispatched work-order ids are carried into downstream places
 
+## Example (ai_driven_development)
+
+- Run: `pnpm run start:ai-driven-development`
+- Entrypoint: [examples/ai_driven_development/main.ts](examples/ai_driven_development/main.ts)
+- Registry: [examples/ai_driven_development/workflow_registry.ts](examples/ai_driven_development/workflow_registry.ts)
+- Transitions: [examples/ai_driven_development/transitions.ts](examples/ai_driven_development/transitions.ts)
+- Input interface place: [examples/ai_driven_development/places/environment.ts](examples/ai_driven_development/places/environment.ts) (`AI_DRIVEN_DEVELOPMENT_EVENT_INTAKE`)
+
+This example is a simulated, simplified baseline for an AI-assisted CLI delivery workflow configured with a Git project plus Azure DevOps and Jira context.
+
+Workflow shape demonstrated:
+1. Inline note intake for a concrete dashboard task (`?` opens Help panel)
+2. Initial approvals across PO, architect, principal, and developer
+3. PO story + Jira issue creation (`WEB-271`)
+4. Architect and principal analysis in parallel, then alignment join
+5. Architect and principal tool/library recommendations during spec and review, with explicit alignment
+6. Single implementation checklist execution and dual approval
+7. Final triad approval, branch/PR creation, and Jira link completion
+
+`architectureSpec.sections` are used as traceability anchors: principal checklists must reference valid section ids, and developer submissions must reference section ids linked by the active checklist.
+
+The scenario intentionally uses a small, non-meta product task to avoid overlap with this engine's own implementation vocabulary.
+
+All actor actions (for example, "architect asks initial clarification") are modeled as external environment events and therefore enter through `inject(...)` into the input interface place. In a real CLI, prompting for answers is simply the UI layer that collects user input and then emits the corresponding typed event into the same intake place.
+
 ## Core model
 
 This project uses an open-net style encoding:

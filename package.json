@@ -7,7 +7,9 @@
   "scripts": {
     "test": "pnpm run test:types",
     "test:types": "tsd --typings src/application/engine.ts --files test-d/**/*.test-d.ts",
-    "start": "tsx examples/factory/main.ts"  
+    "start": "tsx examples/factory/main.ts",
+    "start:factory": "tsx examples/factory/main.ts",
+    "start:ai-driven-development": "tsx examples/ai_driven_development/main.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,5 +20,8 @@
     "tsd": "^0.31.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2"
   }
 }
