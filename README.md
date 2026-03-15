@@ -62,6 +62,50 @@ The scenario intentionally uses a small, non-meta product task to avoid overlap 
 
 All actor actions (for example, "architect asks initial clarification") are modeled as external environment events and therefore enter through `inject(...)` into the input interface place. In a real CLI, prompting for answers is simply the UI layer that collects user input and then emits the corresponding typed event into the same intake place.
 
+## Workflow-net diagram utility
+
+A standalone utility in `tools/workflow_net_diagram/` renders workflow nets into SVG diagrams (and optionally writes DOT source).
+
+Quick commands:
+- `pnpm run diagram:factory`
+- `pnpm run diagram:ai-driven-development`
+
+Outputs:
+- `diagrams/factory.svg` (+ `diagrams/factory.dot`)
+- `diagrams/ai-driven-development.svg` (+ `diagrams/ai-driven-development.dot`)
+
+Generic usage:
+
+```bash
+pnpm run diagram -- --source factory
+pnpm run diagram -- --source ai-driven-development --direction TB
+pnpm run diagram -- --module ./my-workflow/source.ts --out diagrams/custom.svg --dot-out diagrams/custom.dot
+```
+
+Custom module contract (either option works):
+
+```ts
+export const workflowNetDiagramSource = {
+	title: "My workflow",
+	places,
+	transitions,
+}
+```
+
+or
+
+```ts
+export const places = { ... }
+export const transitions = { ... }
+```
+
+Optional CLI switches:
+- `--source-export <name>` (default: `workflowNetDiagramSource`)
+- `--places-export <name>` (default: `places`)
+- `--transitions-export <name>` (default: `transitions`)
+- `--title <diagram title>`
+- `--direction LR|TB` (default: `LR`)
+
 ## Core model
 
 This project uses an open-net style encoding:

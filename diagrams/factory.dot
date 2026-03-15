@@ -1,0 +1,39 @@
+digraph WorkflowNet {
+  rankdir=LR;
+  graph [fontname="Helvetica", overlap=false, splines=true];
+  node [fontname="Helvetica"];
+  edge [fontname="Helvetica"];
+  label="Factory workflow net";
+  labelloc="t";
+  labeljust="l";
+
+  // Places
+  p_0 [shape=doublecircle, label="factory_event_intake"];
+  p_1 [shape=circle, label="enclosure_fabrication"];
+  p_2 [shape=circle, label="firmware_preparation"];
+  p_3 [shape=circle, label="final_assembly"];
+  p_4 [shape=circle, label="dispatch_ready"];
+
+  // Transitions
+  t_0 [shape=box, style="rounded", label="on_work_order_release_fabricate_enclosure_and_prepare_firmware\npriority 10"];
+  t_1 [shape=box, style="rounded", label="on_enclosure_milling_completed_record_fabrication\npriority 6"];
+  t_2 [shape=box, style="rounded", label="on_firmware_package_signed_record_preparation\npriority 6"];
+  t_3 [shape=box, style="rounded", label="on_enclosure_fabricated_and_firmware_signed_perform_final_assembly\npriority 12"];
+  t_4 [shape=box, style="rounded", label="on_final_assembly_completed_mark_dispatch_ready\npriority 1"];
+
+  // Arcs
+  p_0 -> t_0;
+  t_0 -> p_1;
+  t_0 -> p_2;
+  p_0 -> t_1;
+  p_1 -> t_1;
+  t_1 -> p_1;
+  p_0 -> t_2;
+  p_2 -> t_2;
+  t_2 -> p_2;
+  p_1 -> t_3;
+  p_2 -> t_3;
+  t_3 -> p_3;
+  p_3 -> t_4;
+  t_4 -> p_4;
+}

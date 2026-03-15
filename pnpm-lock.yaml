@@ -15,6 +15,9 @@ importers:
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
+      '@viz-js/viz':
+        specifier: ^3.25.0
+        version: 3.25.0
       tsd:
         specifier: ^0.31.2
         version: 0.31.2
@@ -231,6 +234,9 @@ packages:
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
+
+  '@viz-js/viz@3.25.0':
+    resolution: {integrity: sha512-dM7zAYMdf7mcRz5Kdb+YJb6+qv5Rjk0rPZ18gROdpMrP/3S7RFOp8uxybeiz5RypHrE1zo1vccA8Twh4mIcLZw==}
 
   ansi-escapes@4.3.2:
     resolution: {integrity: sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ==}
@@ -785,6 +791,8 @@ snapshots:
       undici-types: 7.18.2
 
   '@types/normalize-package-data@2.4.4': {}
+
+  '@viz-js/viz@3.25.0': {}
 
   ansi-escapes@4.3.2:
     dependencies:
