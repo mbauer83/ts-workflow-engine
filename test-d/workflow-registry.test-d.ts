@@ -18,115 +18,151 @@ interface ValidRegistry {
   [ENV]: {
     interface: "input"
     state: { pending: string | null }
-    targets: [typeof STEP_A, typeof STEP_B]
   }
   [STEP_A]: {
     state: { leftDone: boolean }
-    targets: [typeof END]
   }
   [STEP_B]: {
     state: { rightDone: boolean }
-    targets: [typeof END]
   }
   [END]: {
     state: {}
-    targets: []
   }
 }
 
-const assertRegistryValid = <R extends object>(value: RegistryValidation<R>) => value
+interface ValidTransitions {
+  envStart: {
+    inputPlaces: [typeof ENV]
+    outputPlaces: [typeof STEP_A, typeof STEP_B]
+    priority: 5
+  }
+  stepAToEnd: {
+    inputPlaces: [typeof STEP_A]
+    outputPlaces: [typeof END]
+    priority: 1
+  }
+  stepBToEnd: {
+    inputPlaces: [typeof STEP_B]
+    outputPlaces: [typeof END]
+    priority: 1
+  }
+}
 
-expectType<true>(assertRegistryValid<ValidRegistry>(true))
+const assertRegistryValid = <Places extends object, Transitions extends object>(
+  value: RegistryValidation<Places, Transitions>
+) => value
+
+expectType<true>(assertRegistryValid<ValidRegistry, ValidTransitions>(true))
 expectType<typeof ENV>(null as unknown as InputInterfacePlaces<ValidRegistry>)
-expectType<typeof STEP_A | typeof STEP_B>(null as unknown as SourcePlaces<ValidRegistry>)
-expectType<typeof END>(null as unknown as SinkPlaces<ValidRegistry>)
-expectType<typeof END>(null as unknown as TargetsOf<ValidRegistry, typeof STEP_A>)
+expectType<typeof STEP_A | typeof STEP_B>(null as unknown as SourcePlaces<ValidRegistry, ValidTransitions>)
+expectType<typeof END>(null as unknown as SinkPlaces<ValidRegistry, ValidTransitions>)
+expectType<typeof END>(null as unknown as TargetsOf<ValidRegistry, ValidTransitions, typeof STEP_A>)
 expectAssignable<StateOf<ValidRegistry, typeof STEP_A>>({ isActive: true, leftDone: false })
 
-interface InvalidTargetRegistry {
-  [ENV]: {
-    interface: "input"
-    state: { pending: string | null }
-    targets: [typeof STEP_A]
+interface InvalidTargetTransitions {
+  envStart: {
+    inputPlaces: [typeof ENV]
+    outputPlaces: [typeof STEP_A, typeof STEP_B]
+    priority: 5
   }
-  [STEP_A]: {
-    state: { leftDone: boolean }
-    targets: [typeof GHOST]
+  stepAToGhost: {
+    inputPlaces: [typeof STEP_A]
+    outputPlaces: [typeof GHOST]
+    priority: 1
   }
-  [STEP_B]: {
-    state: { rightDone: boolean }
-    targets: [typeof END]
-  }
-  [END]: {
-    state: {}
-    targets: []
+  stepBToEnd: {
+    inputPlaces: [typeof STEP_B]
+    outputPlaces: [typeof END]
+    priority: 1
   }
 }
 
-expectError(assertRegistryValid<InvalidTargetRegistry>(true))
+expectError(assertRegistryValid<ValidRegistry, InvalidTargetTransitions>(true))
 
-interface InvalidInterfaceIncomingRegistry {
-  [ENV]: {
-    interface: "input"
-    state: { pending: string | null }
-    targets: [typeof STEP_A]
+interface InvalidInterfaceIncomingTransitions {
+  envStart: {
+    inputPlaces: [typeof ENV]
+    outputPlaces: [typeof STEP_A]
+    priority: 5
   }
-  [STEP_A]: {
-    state: { leftDone: boolean }
-    targets: [typeof STEP_B, typeof ENV]
+  stepAToEnv: {
+    inputPlaces: [typeof STEP_A]
+    outputPlaces: [typeof ENV]
+    priority: 1
   }
-  [STEP_B]: {
-    state: { rightDone: boolean }
-    targets: [typeof END]
-  }
-  [END]: {
-    state: {}
-    targets: []
+  stepBToEnd: {
+    inputPlaces: [typeof STEP_B]
+    outputPlaces: [typeof END]
+    priority: 1
   }
 }
 
-expectError(assertRegistryValid<InvalidInterfaceIncomingRegistry>(true))
+expectError(assertRegistryValid<ValidRegistry, InvalidInterfaceIncomingTransitions>(true))
 
 interface InvalidInterfaceRoleRegistry {
   [ENV]: {
     interface: "output"
     state: { pending: string | null }
-    targets: [typeof STEP_A]
   }
   [STEP_A]: {
     state: { leftDone: boolean }
-    targets: [typeof END]
   }
   [STEP_B]: {
     state: { rightDone: boolean }
-    targets: [typeof END]
   }
   [END]: {
     state: {}
-    targets: []
   }
 }
 
-expectError(assertRegistryValid<InvalidInterfaceRoleRegistry>(true))
+expectError(assertRegistryValid<InvalidInterfaceRoleRegistry, ValidTransitions>(true))
 
 interface InvalidMissingEntryRegistry {
   [ENV]: {
     interface: "input"
     state: { pending: string | null }
-    targets: []
   }
   [STEP_A]: {
     state: { leftDone: boolean }
-    targets: [typeof END]
   }
   [STEP_B]: {
     state: { rightDone: boolean }
-    targets: [typeof END]
   }
   [END]: {
     state: {}
-    targets: []
   }
 }
 
-expectError(assertRegistryValid<InvalidMissingEntryRegistry>(true))
+interface InvalidMissingEntryTransitions {
+  stepAToEnd: {
+    inputPlaces: [typeof STEP_A]
+    outputPlaces: [typeof END]
+    priority: 1
+  }
+  stepBToEnd: {
+    inputPlaces: [typeof STEP_B]
+    outputPlaces: [typeof END]
+    priority: 1
+  }
+}
+
+expectError(assertRegistryValid<InvalidMissingEntryRegistry, InvalidMissingEntryTransitions>(true))
+
+interface InvalidPriorityTransitions {
+  envStart: {
+    inputPlaces: [typeof ENV]
+    outputPlaces: [typeof STEP_A, typeof STEP_B]
+    priority: 0
+  }
+}
+
+type PriorityIssue = Extract<
+  RegistryValidation<ValidRegistry, InvalidPriorityTransitions>,
+  { __workflow_registry_error: "transition_priority_must_be_positive_integer" }
+>
+
+expectAssignable<{
+  readonly __workflow_registry_error: "transition_priority_must_be_positive_integer"
+  transition: "envStart"
+  priority: 0
+}>(null as unknown as PriorityIssue)

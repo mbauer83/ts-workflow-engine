@@ -1,34 +1,24 @@
-import type { AssertWorkflowRegistry, RegistryValidation } from "../../src/domain/workflow_registry.js"
-import type { ASSEMBLY, AssemblyState } from "./places/assembly.js"
-import type { ENVIRONMENT, EnvironmentState } from "./places/environment.js"
-import type { HARDWARE, HardwareState } from "./places/hardware.js"
-import type { SHIPPING, ShippingState } from "./places/shipping.js"
-import type { SOFTWARE, SoftwareState } from "./places/software.js"
+import type { FACTORY_EVENT_INTAKE, FactoryEventIntakeState } from "./places/environment.js"
+import type { ENCLOSURE_FABRICATION, EnclosureFabricationState } from "./places/enclosure_fabrication.js"
+import type { FIRMWARE_PREPARATION, FirmwarePreparationState } from "./places/firmware_preparation.js"
+import type { FINAL_ASSEMBLY, FinalAssemblyState } from "./places/final_assembly.js"
+import type { DISPATCH_READY, DispatchReadyState } from "./places/dispatch_ready.js"
 
 export interface FactoryRegistry {
-  [ENVIRONMENT]: {
+  [FACTORY_EVENT_INTAKE]: {
     interface: "input"
-    state: EnvironmentState
-    targets: [typeof HARDWARE, typeof SOFTWARE]
+    state: FactoryEventIntakeState
   }
-  [HARDWARE]: {
-    state: HardwareState
-    targets: [typeof ASSEMBLY]
+  [ENCLOSURE_FABRICATION]: {
+    state: EnclosureFabricationState
   }
-  [SOFTWARE]: {
-    state: SoftwareState
-    targets: [typeof ASSEMBLY]
+  [FIRMWARE_PREPARATION]: {
+    state: FirmwarePreparationState
   }
-  [ASSEMBLY]: {
-    state: AssemblyState
-    targets: [typeof SHIPPING]
+  [FINAL_ASSEMBLY]: {
+    state: FinalAssemblyState
   }
-  [SHIPPING]: {
-    state: ShippingState
-    targets: []
+  [DISPATCH_READY]: {
+    state: DispatchReadyState
   }
 }
-
-const _factoryRegistryValidation: RegistryValidation<FactoryRegistry> = true
-
-export type ActiveWorkflowRegistry = AssertWorkflowRegistry<FactoryRegistry>

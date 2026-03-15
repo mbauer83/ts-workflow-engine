@@ -1,63 +1,73 @@
-import { WorkflowEngine } from "../../src/application/engine.js";
-import { ENVIRONMENT, environmentPlace } from "./places/environment.js";
-import { HARDWARE, hardwarePlace } from "./places/hardware.js";
-import { SOFTWARE, softwarePlace } from "./places/software.js";
-import { ASSEMBLY, assemblyPlace } from "./places/assembly.js";
-import { SHIPPING, shippingPlace } from "./places/shipping.js";
-import type { FactoryRegistry } from "./workflow_registry.js";
+import { WorkflowEngine } from "../../src/application/engine.js"
+import { FINAL_ASSEMBLY, finalAssemblyPlace } from "./places/final_assembly.js"
+import { FACTORY_EVENT_INTAKE, factoryEventIntakePlace } from "./places/environment.js"
+import { ENCLOSURE_FABRICATION, enclosureFabricationPlace } from "./places/enclosure_fabrication.js"
+import { DISPATCH_READY, dispatchReadyPlace } from "./places/dispatch_ready.js"
+import { FIRMWARE_PREPARATION, firmwarePreparationPlace } from "./places/firmware_preparation.js"
+import { factoryTransitions } from "./transitions.js"
+import type { FactoryRegistry } from "./workflow_registry.js"
 
 async function main() {
   const engine = WorkflowEngine.create<FactoryRegistry>()({
-    [ENVIRONMENT]: environmentPlace,
-    [HARDWARE]: hardwarePlace,
-    [SOFTWARE]: softwarePlace,
-    [ASSEMBLY]: assemblyPlace,
-    [SHIPPING]: shippingPlace,
+    places: {
+      [FACTORY_EVENT_INTAKE]: factoryEventIntakePlace,
+      [ENCLOSURE_FABRICATION]: enclosureFabricationPlace,
+      [FIRMWARE_PREPARATION]: firmwarePreparationPlace,
+      [FINAL_ASSEMBLY]: finalAssemblyPlace,
+      [DISPATCH_READY]: dispatchReadyPlace,
+    },
+    transitions: factoryTransitions,
   })
 
-  console.log("--- System Offline ---");
+  console.log("--- Smart Control Unit Factory (Idle) ---")
 
-  console.log("[INPUT] ENVIRONMENT.initialize requestId=init-001 requestedBy=operator")
-  await engine.inject(ENVIRONMENT, {
-    pending: {
-      kind: "initialize",
-      requestId: "init-001",
-      requestedBy: "operator",
+  console.log("[EVENT] work_order_released workOrderId=wo-2026-001 productSku=SCU-XL")
+  await engine.inject(FACTORY_EVENT_INTAKE, {
+    pendingEvent: {
+      type: "work_order_released",
+      workOrderId: "wo-2026-001",
+      productSku: "SCU-XL",
+      releasedBy: "erp.system",
     },
-  });
+  })
 
-  const snapshotAfterInitialize = engine.getSnapshot();
-  console.log("Is Hardware Ready?", snapshotAfterInitialize[HARDWARE].isActive); // true
-  console.log("Is Software Ready?", snapshotAfterInitialize[SOFTWARE].isActive); // true
+  const snapshotAfterFork = engine.getSnapshot()
+  console.log("Parallel enclosure workstream active?", snapshotAfterFork[ENCLOSURE_FABRICATION].isActive)
+  console.log("Parallel firmware workstream active?", snapshotAfterFork[FIRMWARE_PREPARATION].isActive)
 
-  console.log("[INPUT] ENVIRONMENT.cut jobId=hw-42 thicknessMm=8")
-  await engine.inject(ENVIRONMENT, {
-    pending: {
-      kind: "cut",
-      jobId: "hw-42",
-      thicknessMm: 8,
+  console.log("[EVENT] enclosure_milling_completed workOrderId=wo-2026-001 machineId=cnc-17")
+  await engine.inject(FACTORY_EVENT_INTAKE, {
+    pendingEvent: {
+      type: "enclosure_milling_completed",
+      workOrderId: "wo-2026-001",
+      machineId: "cnc-17",
+      panelThicknessMm: 8,
     },
-  });
+  })
 
-  const snapshotAfterCut = engine.getSnapshot();
-  console.log("Hardware metalCut set?", snapshotAfterCut[HARDWARE].metalCut); // true
-  console.log("Hardware lastCutJobId", snapshotAfterCut[HARDWARE].lastCutJobId); // hw-42
+  const snapshotAfterMilling = engine.getSnapshot()
+  console.log("Enclosure milled?", snapshotAfterMilling[ENCLOSURE_FABRICATION].enclosureMilled)
+  console.log("Last milling machine", snapshotAfterMilling[ENCLOSURE_FABRICATION].lastMillingMachineId)
+  console.log("Dispatch already ready?", snapshotAfterMilling[DISPATCH_READY].isActive)
 
-  console.log("[INPUT] ENVIRONMENT.write jobId=sw-42 branch=main")
-  await engine.inject(ENVIRONMENT, {
-    pending: {
-      kind: "write",
-      jobId: "sw-42",
-      branch: "main",
+  console.log("[EVENT] firmware_package_signed workOrderId=wo-2026-001 firmwareVersion=2026.3.0")
+  await engine.inject(FACTORY_EVENT_INTAKE, {
+    pendingEvent: {
+      type: "firmware_package_signed",
+      workOrderId: "wo-2026-001",
+      firmwareVersion: "2026.3.0",
+      signedBy: "ci.release",
     },
-  });
+  })
 
-  const snapshotAfterWrite = engine.getSnapshot();
-  console.log("Software codeWritten set?", snapshotAfterWrite[SOFTWARE].codeWritten); // true
-  console.log("Software lastWriteJobId", snapshotAfterWrite[SOFTWARE].lastWriteJobId); // sw-42
+  const snapshotAfterSynchronization = engine.getSnapshot()
+  console.log("Firmware package signed?", snapshotAfterSynchronization[FIRMWARE_PREPARATION].firmwarePackageSigned)
+  console.log("Firmware version", snapshotAfterSynchronization[FIRMWARE_PREPARATION].firmwareVersion)
+  console.log("Final assembly captured work order", snapshotAfterSynchronization[FINAL_ASSEMBLY].assembledWorkOrderId)
 
-  const finalSnapshot = engine.getSnapshot();
-  console.log("Final target state (SHIPPING) reached?", finalSnapshot[SHIPPING].isActive); // true
+  const finalSnapshot = engine.getSnapshot()
+  console.log("Final target state (DISPATCH_READY) reached?", finalSnapshot[DISPATCH_READY].isActive)
+  console.log("Dispatched work order", finalSnapshot[DISPATCH_READY].dispatchedWorkOrderId)
 }
 
-await main();
+await main()

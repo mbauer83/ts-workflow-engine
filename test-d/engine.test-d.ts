@@ -1,6 +1,7 @@
 import { expectError, expectType } from "tsd"
 import { WorkflowEngine } from "../src/application/engine.js"
 import { definePlace } from "../src/domain/place.js"
+import { defineTransition } from "../src/domain/transition.js"
 import type { Result } from "../src/common/result.js"
 
 declare const ENV: unique symbol
@@ -15,45 +16,61 @@ interface EngineRegistry {
   [ENV]: {
     interface: "input"
     state: EnvironmentState
-    targets: [typeof WORK]
   }
   [WORK]: {
     state: WorkState
-    targets: [typeof END]
   }
   [END]: {
     state: EndState
-    targets: []
   }
 }
 
 const environmentPlace = definePlace<EngineRegistry>()(ENV, {
   interfaceRole: "input",
   state: { isActive: false, pending: null },
-  transitionGuards: {
-    [WORK]: from => from.pending?.kind === "enable" || from.pending?.kind === "work",
-  },
-  transitionEffects: {
-    [WORK]: from => ({ done: (from.pending?.amount ?? 0) > 0 }),
-  },
 })
 
 const workPlace = definePlace<EngineRegistry>()(WORK, {
   state: { isActive: false, done: false },
-  transitionGuards: {
-    [END]: from => from.done,
-  },
 })
 
 const endPlace = definePlace<EngineRegistry>()(END, {
   state: { isActive: false },
-  transitionGuards: {},
+})
+
+const defineEngineTransition = defineTransition<EngineRegistry>()
+
+const environmentToWork = defineEngineTransition(Symbol("Environment.ToWork"), {
+  inputPlaces: [ENV],
+  outputPlaces: [WORK],
+  priority: 5,
+  guard: inputs =>
+    inputs[ENV].pending?.kind === "enable" || inputs[ENV].pending?.kind === "work",
+  effects: {
+    [WORK]: inputs => ({ done: (inputs[ENV].pending?.amount ?? 0) > 0 }),
+  },
+})
+
+const workToEnd = defineEngineTransition(Symbol("Work.ToEnd"), {
+  inputPlaces: [WORK],
+  outputPlaces: [END],
+  priority: 1,
+  guard: inputs => inputs[WORK].done,
 })
 
 const engine = WorkflowEngine.create<EngineRegistry>()({
-  [ENV]: environmentPlace,
-  [WORK]: workPlace,
-  [END]: endPlace,
+  places: {
+    [ENV]: environmentPlace,
+    [WORK]: workPlace,
+    [END]: endPlace,
+  },
+  transitions: {
+    environmentToWork,
+    workToEnd,
+  },
+  configuration: {
+    stabilizationTickLimit: 100,
+  },
 })
 
 expectType<Promise<Result<void, string>>>(
@@ -73,29 +90,34 @@ declare const CLOSED_END: unique symbol
 interface ClosedRegistry {
   [CLOSED_START]: {
     state: {}
-    targets: [typeof CLOSED_END]
   }
   [CLOSED_END]: {
     state: {}
-    targets: []
   }
 }
 
 const closedStartInactive = definePlace<ClosedRegistry>()(CLOSED_START, {
   state: { isActive: false },
-  transitionGuards: {
-    [CLOSED_END]: () => true,
-  },
 })
 
 const closedEndPlace = definePlace<ClosedRegistry>()(CLOSED_END, {
   state: { isActive: false },
-  transitionGuards: {},
+})
+
+const closedStartToEnd = defineTransition<ClosedRegistry>()(Symbol("Closed.StartToEnd"), {
+  inputPlaces: [CLOSED_START],
+  outputPlaces: [CLOSED_END],
+  priority: 1,
 })
 
 expectError(
   WorkflowEngine.create<ClosedRegistry>()({
-    [CLOSED_START]: closedStartInactive,
-    [CLOSED_END]: closedEndPlace,
+    places: {
+      [CLOSED_START]: closedStartInactive,
+      [CLOSED_END]: closedEndPlace,
+    },
+    transitions: {
+      closedStartToEnd,
+    },
   })
 )
