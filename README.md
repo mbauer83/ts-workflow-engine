@@ -1,4 +1,4 @@
-# ts-workflow-system
+# ts-workflow-system (early WIP)
 
 A workflow-net oriented, strongly typed workflow engine (TypeScript).
 
